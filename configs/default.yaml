@@ -1,0 +1,42 @@
+# Default synthetic SH-WFS configuration.
+# Modelled loosely on a small near-IR AO testbed (PRL-style). Every field here
+# is replaced by the real values once ISRO supplies the dataset; nothing in the
+# algorithm code reads anything outside this file.
+
+pupil:
+  diameter_m: 0.15          # turbulated beam pupil diameter
+  wavelength_m: 1.65e-6     # H-band sensing wavelength
+
+mla:
+  n_subaps: 16              # 16 x 16 lenslet Fried grid
+  focal_length_m: 5.0e-3    # f/# ~ 25 with the lenslet pitch below
+  lenslet_pitch_m: 200e-6   # physical lenslet size (pupil is relayed/demagnified onto the MLA)
+
+detector:
+  pixel_size_m: 5.5e-6
+  det_px_per_subap: 20      # spot cell size in detector pixels
+  bit_depth: 8              # .bmp frames
+  frame_dt_s: 2.0e-3        # 2 ms inter-frame (500 Hz)
+
+dm:
+  coupling: 0.15            # inter-actuator coupling fraction
+  max_stroke_m: 4.0e-6
+  pitch_m: null             # null => sub-aperture pitch (Fried geometry)
+
+turbulence:
+  r0_ref_m: 0.009           # Fried parameter at reference wavelength (strong lab turbulence; D/r0 ~ 4)
+  r0_ref_wavelength_m: 0.5e-6
+  L0_m: 25.0
+  l0_m: 0.003
+  wind_speed_ms: 2.0        # lab phase-plate equivalent wind
+  wind_dir_deg: 30.0
+  seed: 1234
+
+noise:
+  photons_per_spot: 2000.0
+  read_noise_e: 2.0
+  dark_e: 0.0
+  enable: true
+
+n_frames: 200
+screen_px_per_subap: 8

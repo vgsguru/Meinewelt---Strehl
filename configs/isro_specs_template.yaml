@@ -1,0 +1,34 @@
+# ISRO real-dataset hardware specs (fill in from the delivered dataset).
+# Load with:  aowfs.io.ISROSpecs.from_yaml("configs/isro_specs_template.yaml")
+# Then:       aowfs.io.load_isro_dataset("<frames_dir>", specs, reference_mode=...)
+#
+# These are the quantities the brief's "Data Required" section lists. Only the
+# io/ layer reads them; Phases 1-6 run unchanged on the resulting sequence.
+
+# --- detector / camera ---
+pixel_size_m: 5.5e-6            # physical detector pixel pitch
+# frame_resolution: [1024, 1024]  # (H, W); optional sanity check against the .bmp files
+bit_depth: 8                   # 8 for .bmp
+
+# --- micro-lens array ---
+mla_n_lenslets: 16             # number of sub-apertures across the pupil (N, assumed N x N)
+mla_lenslet_pitch_m: 200e-6    # physical lenslet pitch (MLA size / lenslet count)
+mla_focal_length_m: 5.0e-3     # lenslet focal length
+
+# Detector pixels per spot cell. Leave commented to derive it as
+# round(mla_lenslet_pitch_m / pixel_size_m) -- the physical spot spacing.
+# det_px_per_subap: 36
+
+# --- beam / pupil ---
+pupil_diameter_m: 0.15         # pupil size of the turbulated beam
+wavelength_m: 1.65e-6          # sensing wavelength
+
+# --- timing ---
+frame_dt_s: 2.0e-3             # inter-frame interval (a few ms)
+
+# --- deformable mirror ---
+dm_coupling: 0.15              # inter-actuator coupling fraction (from the DM spec)
+dm_max_stroke_m: 4.0e-6        # mechanical stroke limit
+
+# --- internal (not measured; reconstructed-phase-map resolution) ---
+screen_px_per_subap: 8

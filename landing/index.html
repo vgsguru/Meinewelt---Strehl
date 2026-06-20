@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Meinewelt-Strehl · From Turbulence to Clarity</title>
+<meta name="description" content="Predictive adaptive-optics wavefront reconstruction — real-time correction of atmospheric turbulence from Shack-Hartmann sensor data. ISRO BAH 2026 · PS9 · PRL." />
+<link rel="icon" href="assets/images/logo.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800;900&family=Chakra+Petch:wght@300;400;500;600;700&family=Roboto+Mono:wght@300;400;500;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#02050b;--bg2:#050e1a;
+    --surface:rgba(180,225,255,.05);--surface2:rgba(180,225,255,.09);
+    --glass:rgba(5,12,22,.55);--glass2:rgba(5,14,26,.82);
+    --border:rgba(140,200,235,.13);--border2:rgba(150,220,255,.28);
+    --text:#eaf7ff;--muted:#9fb6c8;--dim:#62788c;
+    --cyan:#34d0f5;--green:#37e07e;--teal:#2fd9c5;--amber:#f5c25a;--hot:#ff6a52;--good:#37e07e;
+    --grad:linear-gradient(108deg,var(--cyan) 0%,var(--teal) 48%,var(--green) 100%);
+    --grad-soft:linear-gradient(108deg,rgba(52,208,245,.16),rgba(55,224,126,.16));
+    --ease:cubic-bezier(.16,1,.3,1);--spring:cubic-bezier(.34,1.56,.64,1);--maxw:1180px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Chakra Petch',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#02050b;color:var(--text);line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  body.locked{overflow:hidden;height:100vh}
+  .mono{font-family:'Roboto Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
+  a{color:inherit;text-decoration:none}
+  ::selection{background:rgba(55,224,126,.32)}
+  img{max-width:100%;display:block}
+  .logo-img{mix-blend-mode:screen}
+
+  /* ===== EARTH BACKGROUND VIDEO ===== */
+  .bgvid{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:-10;background:#02040a}
+  .bgscrim{position:fixed;inset:0;z-index:-9;pointer-events:none;background:linear-gradient(180deg,rgba(2,5,11,.5) 0%,rgba(2,5,11,.28) 38%,rgba(2,5,11,.55) 78%,rgba(2,5,11,.82) 100%)}
+  #stars{position:fixed;inset:0;z-index:-8;opacity:.65}
+  .nebula{position:fixed;inset:0;z-index:-8;overflow:hidden;filter:blur(72px);opacity:.5;pointer-events:none}
+  .neb{position:absolute;border-radius:50%;mix-blend-mode:screen;animation:drift 34s var(--ease) infinite alternate}
+  .n1{width:46vw;height:46vw;left:-8vw;top:-10vw;background:radial-gradient(circle,#1166a6,transparent 64%)}
+  .n2{width:40vw;height:40vw;right:-6vw;top:10vh;background:radial-gradient(circle,#1aa07a,transparent 64%);animation-delay:-12s}
+  @keyframes drift{to{transform:translate3d(4vw,3vh,0) scale(1.14)}}
+
+  /* central glow behind astronaut (like the reference) */
+  .coreglow{position:fixed;left:50%;top:34vh;transform:translate(-50%,-50%);width:62vw;height:62vw;max-width:760px;max-height:760px;z-index:-7;pointer-events:none;
+    background:radial-gradient(circle,rgba(70,150,230,.34),rgba(40,110,200,.12) 38%,transparent 64%)}
+
+  /* orbital rings */
+  .orbits{position:fixed;left:50%;bottom:-58vh;transform:translateX(-50%);width:200vh;height:200vh;z-index:-7;pointer-events:none;opacity:.55}
+  .orbits svg{width:100%;height:100%}
+
+  /* EARTH */
+  .earth-stage{position:fixed;left:50%;top:62vh;transform:translateX(-50%);width:min(172vh,1700px);aspect-ratio:1;z-index:-6;pointer-events:none}
+  @media(max-width:760px){.earth-stage{top:66vh;width:250vw}}
+  .earth-glow{position:absolute;inset:-9%;border-radius:50%;background:radial-gradient(circle at 42% 34%,rgba(120,200,255,.4),rgba(60,150,255,.12) 46%,transparent 62%);filter:blur(10px)}
+  .earth-photo{position:absolute;inset:0;border-radius:50%}
+  .earth-css{position:absolute;inset:0;border-radius:50%;overflow:hidden;
+    background:radial-gradient(circle at 38% 32%,#83d4fa 0%,#2f8bd6 26%,#15599f 48%,#0c3a6e 66%,#07254a 80%,#04162f 100%);
+    box-shadow:inset -80px -64px 160px rgba(0,4,12,.82),inset 46px 38px 110px -36px rgba(165,222,255,.55)}
+  .earth-land{position:absolute;inset:-2%;border-radius:50%;mix-blend-mode:screen;filter:blur(1.5px);animation:spin 150s linear infinite;
+    background:radial-gradient(ellipse 20% 14% at 38% 40%,rgba(48,200,140,.72),transparent 60%),radial-gradient(ellipse 14% 22% at 60% 60%,rgba(40,178,130,.64),transparent 60%),radial-gradient(ellipse 12% 9% at 30% 64%,rgba(55,212,150,.6),transparent 60%),radial-gradient(ellipse 10% 14% at 70% 32%,rgba(46,192,138,.6),transparent 60%),radial-gradient(ellipse 8% 6% at 52% 24%,rgba(55,212,150,.5),transparent 60%),radial-gradient(ellipse 13% 8% at 50% 78%,rgba(42,182,132,.52),transparent 60%)}
+  .earth-clouds{position:absolute;inset:-2%;border-radius:50%;mix-blend-mode:screen;filter:blur(3px);animation:spin 110s linear infinite reverse;
+    background:radial-gradient(ellipse 30% 11% at 50% 30%,rgba(255,255,255,.24),transparent 60%),radial-gradient(ellipse 25% 9% at 38% 56%,rgba(255,255,255,.18),transparent 60%),radial-gradient(ellipse 22% 8% at 67% 47%,rgba(255,255,255,.16),transparent 60%),radial-gradient(ellipse 18% 7% at 58% 70%,rgba(255,255,255,.13),transparent 60%)}
+  .earth-night{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 76% 74%,rgba(0,4,12,.62),transparent 46%)}
+  .earth-atmo{position:absolute;inset:-7%;border-radius:50%;pointer-events:none;background:radial-gradient(circle at 50% 50%,transparent 70%,rgba(130,205,255,.2) 78%,transparent 86%);box-shadow:0 0 80px 6px rgba(90,180,255,.22)}
+
+  /* astronaut + satellites */
+  .floatobj{position:fixed;z-index:-5;pointer-events:none}
+  .sat1{top:13vh;right:7vw;width:clamp(70px,7vw,120px);opacity:.8;animation:floaty 15s ease-in-out infinite}
+  .sat2{top:20vh;left:6vw;width:clamp(56px,6vw,96px);opacity:.7;animation:floaty2 19s ease-in-out infinite}
+  @media(max-width:760px){.sat2{display:none}}
+  .spin-slow{animation:spin 70s linear infinite;transform-origin:center}
+  @keyframes floaty{0%,100%{transform:translateY(0) rotate(-5deg)}50%{transform:translateY(-22px) rotate(5deg)}}
+  @keyframes floaty2{0%,100%{transform:translateY(0) rotate(6deg)}50%{transform:translateY(20px) rotate(-5deg)}}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* ===== INTRO SPLASH ===== */
+  .intro{position:fixed;inset:0;z-index:1000;background:#000;display:flex;align-items:center;justify-content:center;overflow:hidden;transition:opacity .9s var(--ease),visibility .9s}
+  .intro.hide{opacity:0;visibility:hidden;pointer-events:none}
+  .intro video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .intro .scrim{position:absolute;inset:0;background:radial-gradient(circle at 50% 45%,transparent 40%,rgba(0,0,0,.55) 100%)}
+  .intro-ui{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;padding:clamp(20px,5vw,46px);pointer-events:none}
+  .intro-top{display:flex;justify-content:flex-end}
+  .intro-bottom{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  .intro-tag{font-family:'Roboto Mono';font-size:12px;letter-spacing:3px;text-transform:uppercase;color:rgba(233,246,255,.66);animation:pulse 3s ease-in-out infinite}
+  @keyframes pulse{50%{opacity:.45}}
+  .skip-btn,.ic-btn{pointer-events:auto;cursor:pointer;font-family:'Chakra Petch';font-weight:600;background:rgba(5,12,22,.5);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid var(--border2);color:var(--text);border-radius:40px;transition:transform .25s var(--ease),background .25s,border-color .25s}
+  .skip-btn{font-size:14px;padding:11px 22px;display:inline-flex;align-items:center;gap:9px}
+  .skip-btn:hover{background:rgba(5,12,22,.85);transform:translateY(-2px);border-color:var(--cyan)}
+  .skip-btn svg{width:15px;height:15px}
+  .ic-btn{width:46px;height:46px;display:grid;place-items:center}.ic-btn:hover{border-color:var(--cyan);transform:scale(1.06)}.ic-btn svg{width:20px;height:20px;stroke:var(--text);fill:none}
+  .intro-progress{position:absolute;left:0;right:0;bottom:0;height:3px;background:rgba(255,255,255,.08)}
+  #introbar{height:100%;width:0;background:var(--grad);box-shadow:0 0 14px var(--cyan)}
+  #progress{position:fixed;top:0;left:0;height:3px;width:0;z-index:200;background:var(--grad);box-shadow:0 0 12px rgba(52,208,245,.8)}
+
+  /* ===== NAV ===== */
+  nav{position:fixed;top:0;left:0;right:0;z-index:150;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:15px clamp(16px,4vw,44px);transition:background .45s var(--ease),border-color .45s,padding .45s,backdrop-filter .45s}
+  nav.scrolled{background:var(--glass);backdrop-filter:blur(16px) saturate(140%);-webkit-backdrop-filter:blur(16px) saturate(140%);border-bottom:1px solid var(--border);padding-top:10px;padding-bottom:10px}
+  .brand{display:flex;align-items:center;gap:12px;flex:0 0 auto;z-index:2}.brand img{height:50px;width:auto;transition:height .45s var(--ease)}
+  nav.scrolled .brand img{height:40px}
+  .navlinks{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;gap:6px;align-items:center;padding:5px;border-radius:40px;background:var(--surface);border:1px solid var(--border)}
+  .navlinks a{position:relative;z-index:2;font-size:13.5px;color:var(--muted);padding:9px 16px;border-radius:30px;transition:color .3s var(--ease)}
+  .navlinks a.active,.navlinks a:hover{color:#05101a}
+  #pill{position:absolute;z-index:1;top:5px;left:5px;height:calc(100% - 10px);border-radius:30px;background:var(--grad);box-shadow:0 4px 20px -4px rgba(52,208,245,.6);transition:transform .5s var(--spring),width .5s var(--spring),opacity .3s;opacity:0}
+  @media(max-width:900px){.navlinks{display:none}}
+  .nav-right{display:flex;align-items:center;gap:12px;flex:0 0 auto;z-index:2}
+  .btn{display:inline-flex;align-items:center;gap:9px;font-family:'Chakra Petch';font-weight:600;font-size:14.5px;padding:11px 20px;border-radius:40px;cursor:pointer;border:none;white-space:nowrap;transition:transform .25s var(--ease),box-shadow .25s,filter .25s,background .25s,border-color .25s}
+  .btn:active{transform:scale(.97)}
+  .btn-primary{background:var(--grad);color:#03130c;font-weight:700;box-shadow:0 6px 26px -6px rgba(55,224,126,.55)}
+  .btn-primary:hover{filter:brightness(1.07);box-shadow:0 12px 40px -8px rgba(52,208,245,.7);transform:translateY(-2px)}
+  .btn-ghost{background:rgba(5,12,22,.4);color:var(--text);border:1px solid var(--border2)}
+  .btn-ghost:hover{background:var(--surface2);transform:translateY(-2px);border-color:var(--cyan)}
+  .btn svg{width:16px;height:16px}
+  .burger{display:none;width:46px;height:46px;border-radius:12px;background:var(--surface);border:1px solid var(--border);cursor:pointer;place-items:center}
+  .burger svg{width:22px;height:22px;stroke:var(--text)}
+  @media(max-width:900px){.burger{display:grid}}
+  .sheet{position:fixed;inset:0;z-index:160;background:var(--glass2);backdrop-filter:blur(22px) saturate(140%);-webkit-backdrop-filter:blur(22px) saturate(140%);display:flex;flex-direction:column;justify-content:center;gap:8px;padding:40px;opacity:0;visibility:hidden;transform:scale(1.04);transition:opacity .45s var(--ease),transform .45s var(--ease),visibility .45s}
+  .sheet.open{opacity:1;visibility:visible;transform:none}
+  .sheet a{font-family:'Chakra Petch';font-weight:600;font-size:30px;letter-spacing:-.5px;padding:14px 10px;color:var(--text);border-bottom:1px solid var(--border);transition:color .3s,padding-left .3s var(--ease)}
+  .sheet a:hover{color:var(--cyan);padding-left:22px}.sheet .close{position:absolute;top:24px;right:24px}
+
+  /* ===== HERO (centered composition) ===== */
+  .hero{position:relative;min-height:100svh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:120px 18px 0}
+  .kicker{font-family:'Roboto Mono';font-size:clamp(10px,1.3vw,13px);letter-spacing:clamp(3px,.7vw,7px);text-transform:uppercase;color:var(--cyan);margin-bottom:18px}
+  .mark-wrap{position:relative;width:100%;max-width:1240px;display:flex;align-items:center;justify-content:center}
+  .bigmark{position:relative;z-index:3;font-family:'Orbitron',sans-serif;font-weight:800;font-size:clamp(20px,5.7vw,76px);line-height:1;letter-spacing:0;white-space:nowrap;
+    color:rgba(150,210,255,.05);-webkit-text-fill-color:rgba(150,210,255,.05);
+    -webkit-text-stroke:1.7px rgba(236,248,255,.95);
+    text-shadow:0 3px 24px rgba(0,0,0,.55),0 0 44px rgba(80,170,255,.28)}
+  @media(max-width:680px){.bigmark{white-space:normal;font-size:clamp(26px,9vw,52px)}}
+  /* astronaut: fixed companion behind the content, travels on scroll, floats left<->right */
+  .hero-astro{position:fixed;left:0;top:0;z-index:-4;width:clamp(360px,54vw,860px);pointer-events:none;will-change:transform;
+    transform:translate(calc(50vw - 50%),calc(44vh - 50%)) scale(1);transition:transform 1.5s var(--ease);
+    filter:drop-shadow(0 26px 60px rgba(0,0,0,.6)) drop-shadow(0 0 50px rgba(70,160,240,.28))}
+  .astro-bob{animation:heroFloat 9s ease-in-out infinite}
+  @keyframes heroFloat{0%,100%{transform:translate(-26px,-7px) rotate(-3deg)}50%{transform:translate(26px,7px) rotate(3deg)}}
+  .astro-photo{width:100%}
+  @media(max-width:820px){.hero-astro{width:clamp(220px,56vw,420px);opacity:.5}}
+  .hero-tag{position:relative;z-index:3;margin-top:34px;color:var(--text);font-size:clamp(18px,2.4vw,26px);font-weight:500;letter-spacing:.2px}
+  .hero-tag b{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:700}
+  .hero-sub{position:relative;z-index:3;color:var(--muted);font-size:clamp(13px,1.5vw,16px);max-width:56ch;margin:14px auto 0}
+  .cta-pill{position:relative;z-index:3;margin-top:30px;display:inline-flex;align-items:center;gap:11px;font-family:'Chakra Petch';font-weight:700;font-size:clamp(15px,1.7vw,18px);color:#03130c;background:var(--grad);padding:16px 32px;border-radius:50px;cursor:pointer;
+    box-shadow:0 10px 40px -8px rgba(55,224,126,.6),inset 0 1px 0 rgba(255,255,255,.4);transition:transform .25s var(--ease),box-shadow .25s,filter .25s}
+  .cta-pill:hover{transform:translateY(-3px);filter:brightness(1.06);box-shadow:0 16px 50px -8px rgba(52,208,245,.7)}
+  .cta-pill:active{transform:scale(.97)}.cta-pill svg{width:18px;height:18px;stroke:#03130c}
+  .hud-strip{position:relative;z-index:3;display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:26px;font-family:'Roboto Mono';font-size:11px;letter-spacing:1px;color:var(--muted)}
+  .hud-chip{display:flex;align-items:center;gap:7px;border:1px solid var(--border);background:rgba(5,12,22,.5);backdrop-filter:blur(8px);padding:7px 12px;border-radius:8px}
+  .hud-chip i{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 2s infinite}
+  .scroll-hint{position:absolute;bottom:22px;left:50%;transform:translateX(-50%);color:var(--dim);font-family:'Roboto Mono';font-size:11px;letter-spacing:2px;display:flex;flex-direction:column;align-items:center;gap:8px;animation:bob 2.4s ease-in-out infinite;z-index:3}
+  @keyframes bob{50%{transform:translate(-50%,8px)}}
+
+  /* ===== SECTIONS ===== */
+  section{position:relative;padding:clamp(72px,11vh,150px) clamp(18px,5vw,40px)}
+  .wrap{max-width:var(--maxw);margin:0 auto}
+  .eyebrow{font-family:'Roboto Mono';font-size:12px;letter-spacing:3px;text-transform:uppercase;color:var(--cyan);margin-bottom:16px;display:flex;align-items:center;gap:10px}
+  .eyebrow::before{content:"";width:26px;height:1px;background:var(--cyan)}
+  h2{font-size:clamp(28px,4.4vw,48px);line-height:1.08;font-weight:700;letter-spacing:-1px}
+  .grad-text{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .lead{color:var(--muted);font-size:clamp(15px,1.6vw,18.5px);max-width:62ch}
+  .section-head{max-width:64ch;margin-bottom:54px}.section-head h2{margin-bottom:18px}
+  .grid{display:grid;gap:22px}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}.g2{grid-template-columns:repeat(2,1fr)}
+  @media(max-width:900px){.g3,.g4{grid-template-columns:repeat(2,1fr)}}@media(max-width:560px){.g2,.g3,.g4{grid-template-columns:1fr}}
+  .card{background:var(--glass);backdrop-filter:blur(8px);border:1px solid var(--border);border-radius:18px;padding:26px;transition:transform .45s var(--ease),border-color .45s,background .45s,box-shadow .45s}
+  .card:hover{transform:translateY(-6px);border-color:var(--border2);background:var(--surface2);box-shadow:0 20px 50px -24px rgba(52,208,245,.4)}
+  .card .ic{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;margin-bottom:16px;background:var(--grad-soft);border:1px solid var(--border)}
+  .card .ic svg{width:23px;height:23px;stroke:var(--cyan);fill:none}.card h3{font-size:19px;font-weight:600;margin-bottom:9px}.card p{color:var(--muted);font-size:14.5px}
+  .better-top{display:grid;grid-template-columns:1.1fr .9fr;gap:clamp(28px,4vw,56px);align-items:center;margin-bottom:54px}
+  .viz-side{display:flex;justify-content:flex-end}
+  @media(max-width:900px){.better-top{grid-template-columns:1fr;gap:36px}.viz-side{justify-content:center}}
+  .viz{position:relative;aspect-ratio:1;width:100%;max-width:440px;border-radius:22px;overflow:hidden;border:1px solid var(--border2);background:radial-gradient(circle at 50% 40%,rgba(52,208,245,.12),transparent 70%);box-shadow:0 34px 90px -34px rgba(0,0,0,.85),inset 0 1px 0 rgba(255,255,255,.06)}
+  .viz::before,.viz::after{content:"";position:absolute;width:22px;height:22px;border:2px solid var(--cyan);opacity:.7;z-index:4}
+  .viz::before{top:12px;left:12px;border-right:none;border-bottom:none;border-radius:4px 0 0 0}.viz::after{bottom:12px;right:12px;border-left:none;border-top:none;border-radius:0 0 4px 0}
+  .viz canvas{position:absolute;inset:0;width:100%;height:100%}
+  .viz .tag{position:absolute;left:14px;bottom:13px;z-index:3;font-family:'Roboto Mono';font-size:11px;letter-spacing:1px;color:var(--muted);background:rgba(2,5,11,.6);backdrop-filter:blur(8px);padding:6px 11px;border-radius:8px;border:1px solid var(--border)}
+  .viz .mode{position:absolute;right:14px;top:13px;z-index:3;font-family:'Roboto Mono';font-size:11px;letter-spacing:1px;padding:6px 11px;border-radius:8px;border:1px solid var(--border2);background:rgba(2,5,11,.6);backdrop-filter:blur(8px);transition:.4s}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}@media(max-width:760px){.stats{grid-template-columns:repeat(2,1fr)}}
+  .stat{text-align:center;padding:32px 16px;border-radius:18px;background:var(--glass);backdrop-filter:blur(8px);border:1px solid var(--border);transition:.45s var(--ease)}
+  .stat:hover{border-color:var(--border2);transform:translateY(-4px)}
+  .stat .num{font-family:'Orbitron',sans-serif;font-weight:800;font-size:clamp(30px,4.6vw,48px);line-height:1;letter-spacing:-.01em;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .stat .lbl{color:var(--muted);font-size:13px;margin-top:12px}.stat .sub{color:var(--dim);font-size:11.5px;margin-top:5px;font-family:'Roboto Mono'}
+  .flow{display:flex;align-items:stretch;flex-wrap:wrap;justify-content:center;margin-top:8px}
+  .step{flex:1;min-width:150px;background:var(--glass);backdrop-filter:blur(8px);border:1px solid var(--border);border-radius:16px;padding:20px 18px;transition:.4s var(--ease)}
+  .step:hover{border-color:var(--cyan);transform:translateY(-5px)}.step .n{font-family:'Roboto Mono';font-size:11px;color:var(--cyan);letter-spacing:2px}.step h4{font-size:16px;margin:8px 0 6px;font-weight:600}.step p{color:var(--muted);font-size:13px}
+  .arrow{display:grid;place-items:center;color:var(--dim);padding:0 8px;font-size:22px}@media(max-width:760px){.arrow{transform:rotate(90deg);padding:6px 0}}
+  .vs{display:grid;grid-template-columns:1fr;gap:18px}.vs .panel{border-radius:18px;padding:24px;border:1px solid var(--border)}
+  .vs .naive{background:linear-gradient(180deg,rgba(255,106,82,.09),transparent)}.vs .ours{background:linear-gradient(180deg,rgba(55,224,126,.11),transparent);border-color:rgba(55,224,126,.32)}
+  .vs h3{font-size:18px;margin-bottom:15px;display:flex;align-items:center;gap:9px}.vs ul{list-style:none;display:flex;flex-direction:column;gap:11px}
+  .vs li{display:flex;gap:11px;color:var(--muted);font-size:14.5px;align-items:flex-start}.vs li svg{width:18px;height:18px;flex:0 0 auto;margin-top:2px;fill:none}
+  .dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
+  .chartcard{background:var(--glass);backdrop-filter:blur(8px);border:1px solid var(--border);border-radius:20px;padding:28px 24px 16px}
+  .chartcard h3{font-size:18px;font-weight:600;margin-bottom:4px}.chartcard .cap{color:var(--muted);font-size:13px;margin-bottom:16px}
+  .legend{display:flex;gap:20px;font-family:'Roboto Mono';font-size:12px;color:var(--muted);margin-top:8px;flex-wrap:wrap}.legend span{display:flex;align-items:center;gap:7px}
+  .tbl{width:100%;border-collapse:collapse;font-size:14px}.tbl th,.tbl td{padding:13px 14px;text-align:left;border-bottom:1px solid var(--border)}
+  .tbl th{font-family:'Roboto Mono';font-size:11.5px;letter-spacing:1px;text-transform:uppercase;color:var(--dim);font-weight:500}.tbl td.mono{color:var(--text)}.tbl tr:hover td{background:var(--surface)}
+  .pill{font-family:'Roboto Mono';font-size:11px;padding:3px 9px;border-radius:20px;border:1px solid}
+  .pill.win{color:var(--good);border-color:rgba(55,224,126,.42);background:rgba(55,224,126,.08)}.pill.mid{color:var(--amber);border-color:rgba(245,194,90,.42);background:rgba(245,194,90,.08)}
+  .reveal{opacity:0;transform:translateY(30px);transition:opacity .85s var(--ease),transform .85s var(--ease)}.reveal.in{opacity:1;transform:none}
+  .reveal.d1{transition-delay:.08s}.reveal.d2{transition-delay:.16s}.reveal.d3{transition-delay:.24s}.reveal.d4{transition-delay:.32s}
+  footer{position:relative;text-align:center;padding:clamp(72px,9vh,120px) 20px 56px;border-top:1px solid var(--border);background:radial-gradient(circle at 50% 0,rgba(52,208,245,.12),transparent 60%)}
+  footer .flogo{width:min(320px,70vw);margin:0 auto 28px}footer h2{margin-bottom:18px}
+  .cta-row{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:30px}.foot-meta{color:var(--dim);font-size:12px;margin-top:44px;font-family:'Roboto Mono';line-height:1.9}
+  @media(prefers-reduced-motion:reduce){*{animation:none!important;transition-duration:.01ms!important;scroll-behavior:auto!important}.reveal{opacity:1;transform:none}}
+</style>
+</head>
+<body class="locked">
+
+<!-- ===== EARTH BACKGROUND VIDEO ===== -->
+<video class="bgvid" autoplay muted loop playsinline preload="auto" aria-hidden="true"><source src="assets/videos/background.mp4" type="video/mp4" /></video>
+<div class="bgscrim"></div>
+<canvas id="stars"></canvas>
+<div class="coreglow"></div>
+
+<!-- ASTRONAUT + SATELLITES (decor) -->
+<div class="floatobj sat1" aria-hidden="true"><svg class="spin-slow" viewBox="0 0 220 120"><defs><linearGradient id="panel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0b3a66"/><stop offset="1" stop-color="#06223f"/></linearGradient></defs><g stroke="rgba(52,208,245,.55)" stroke-width="1"><rect x="6" y="40" width="70" height="40" rx="3" fill="url(#panel)"/><rect x="144" y="40" width="70" height="40" rx="3" fill="url(#panel)"/><line x1="24" y1="40" x2="24" y2="80"/><line x1="42" y1="40" x2="42" y2="80"/><line x1="60" y1="40" x2="60" y2="80"/><line x1="162" y1="40" x2="162" y2="80"/><line x1="180" y1="40" x2="180" y2="80"/><line x1="198" y1="40" x2="198" y2="80"/><line x1="6" y1="60" x2="76" y2="60"/><line x1="144" y1="60" x2="214" y2="60"/></g><rect x="86" y="44" width="48" height="32" rx="6" fill="#c8d3e4" stroke="#8294ab" stroke-width="1.5"/><line x1="110" y1="44" x2="110" y2="18" stroke="#aebbcd" stroke-width="2"/><circle cx="110" cy="16" r="4" fill="none" stroke="var(--green)" stroke-width="2"/></svg></div>
+<div class="floatobj sat2" aria-hidden="true"><svg class="spin-slow" style="animation-duration:52s" viewBox="0 0 180 110"><g stroke="rgba(55,224,126,.5)" stroke-width="1"><rect x="6" y="38" width="54" height="34" rx="3" fill="#073a2c"/><rect x="120" y="38" width="54" height="34" rx="3" fill="#073a2c"/><line x1="24" y1="38" x2="24" y2="72"/><line x1="42" y1="38" x2="42" y2="72"/><line x1="138" y1="38" x2="138" y2="72"/><line x1="156" y1="38" x2="156" y2="72"/></g><rect x="70" y="40" width="40" height="30" rx="6" fill="#c8d3e4" stroke="#8294ab" stroke-width="1.5"/></svg></div>
+
+<div id="progress"></div>
+
+<!-- ===== INTRO SPLASH ===== -->
+<div class="intro" id="intro">
+  <video id="introvid" playsinline muted preload="none"><source src="assets/videos/intro.mp4" type="video/mp4" /></video>
+  <div class="scrim"></div>
+  <div class="intro-ui">
+    <div class="intro-top"><button class="ic-btn" id="sound" aria-label="Unmute intro"><svg viewBox="0 0 24 24" stroke-width="1.8"><path d="M11 5 6 9H3v6h3l5 4V5z" stroke-linejoin="round"/><path id="mutex" d="M22 9l-6 6M16 9l6 6" stroke-linecap="round"/></svg></button></div>
+    <div class="intro-bottom"><span class="intro-tag">Meinewelt-Strehl · from turbulence to clarity</span><button class="skip-btn" id="skip">Skip intro <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14M13 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+    <div class="intro-progress"><div id="introbar"></div></div>
+  </div>
+</div>
+
+<!-- ===== NAV ===== -->
+<nav id="nav">
+  <a class="brand" href="#top" aria-label="Meinewelt-Strehl home"><img class="logo-img" src="assets/images/logo.png" alt="Meinewelt-Strehl logo" /></a>
+  <div class="navlinks" id="navlinks"><span id="pill"></span>
+    <a href="#challenge" data-sec="challenge">Challenge</a><a href="#solution" data-sec="solution">Solution</a><a href="#results" data-sec="results">Results</a><a href="#realdata" data-sec="realdata">Real Data</a></div>
+  <div class="nav-right">
+    <a class="btn btn-ghost" id="enter-nav" href="#" target="_blank" rel="noopener">Enter Workspace</a>
+    <button class="burger" id="burger" aria-label="Open menu"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h16" stroke-linecap="round"/></svg></button>
+  </div>
+</nav>
+<div class="sheet" id="sheet">
+  <button class="ic-btn close" id="sheetclose" aria-label="Close menu"><svg viewBox="0 0 24 24" stroke-width="2"><path d="M6 6l12 12M18 6 6 18" stroke-linecap="round"/></svg></button>
+  <a href="#challenge">Challenge</a><a href="#solution">Solution</a><a href="#how">How it works</a><a href="#results">Results</a><a href="#realdata">Real Data</a>
+  <a class="btn btn-primary" id="enter-sheet" href="#" target="_blank" rel="noopener" style="margin-top:24px;justify-content:center;font-size:18px;padding:16px">Enter Workspace</a>
+</div>
+
+<!-- ===== HERO ===== -->
+<header class="hero" id="top">
+  <div class="kicker reveal">Predictive Adaptive Optics · Orbital-Grade Wavefront Control</div>
+  <div class="mark-wrap">
+    <h1 class="bigmark reveal d1">MEINEWELT-STREHL</h1>
+    <div class="hero-astro" id="astroFix" aria-hidden="true">
+      <div class="astro-bob">
+        <img class="astro-photo" src="assets/images/astronout.png" alt="Astronaut" style="display:none"
+             onload="this.style.display='block';this.parentNode.querySelector('.astro-svg').style.display='none';" />
+        <svg class="astro-svg" viewBox="0 0 360 360" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="suit" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fbfdff"/><stop offset=".55" stop-color="#dde6f2"/><stop offset="1" stop-color="#aebcce"/></linearGradient>
+            <linearGradient id="suitsh" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d4dded"/><stop offset="1" stop-color="#94a4ba"/></linearGradient>
+            <radialGradient id="visorG" cx="38%" cy="32%" r="78%"><stop offset="0" stop-color="#2a6da6"/><stop offset=".45" stop-color="#123b63"/><stop offset=".8" stop-color="#0a1f38"/><stop offset="1" stop-color="#05101f"/></radialGradient>
+            <linearGradient id="packG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e7edf6"/><stop offset="1" stop-color="#9aa9bf"/></linearGradient>
+          </defs>
+          <g transform="rotate(-16 180 180)">
+            <!-- backpack -->
+            <rect x="116" y="92" width="128" height="150" rx="30" fill="url(#packG)" stroke="#8294ab" stroke-width="2"/>
+            <!-- limbs -->
+            <g fill="url(#suit)" stroke="#9fb0c8" stroke-width="2.4">
+              <!-- left arm up -->
+              <rect x="60" y="120" width="46" height="34" rx="17" transform="rotate(-38 83 137)"/>
+              <rect x="36" y="86" width="42" height="32" rx="16" transform="rotate(-58 57 102)"/>
+              <!-- right arm reaching -->
+              <rect x="236" y="150" width="56" height="34" rx="17" transform="rotate(26 264 167)"/>
+              <rect x="282" y="176" width="48" height="30" rx="15" transform="rotate(40 306 191)"/>
+              <!-- legs -->
+              <rect x="138" y="232" width="40" height="74" rx="20" transform="rotate(8 158 269)"/>
+              <rect x="120" y="296" width="38" height="48" rx="18" transform="rotate(20 139 320)"/>
+              <rect x="190" y="232" width="40" height="70" rx="20" transform="rotate(-12 210 267)"/>
+              <rect x="206" y="292" width="38" height="46" rx="18" transform="rotate(-26 225 315)"/>
+              <!-- torso -->
+              <rect x="126" y="120" width="108" height="128" rx="40"/>
+            </g>
+            <!-- gloves & boots -->
+            <circle cx="50" cy="86" r="16" fill="#eef3fb" stroke="#9fb0c8" stroke-width="2.4"/>
+            <circle cx="322" cy="206" r="16" fill="#eef3fb" stroke="#9fb0c8" stroke-width="2.4"/>
+            <rect x="118" y="332" width="40" height="22" rx="9" fill="#cdd8e8" stroke="#8294ab" stroke-width="2.4" transform="rotate(20 138 343)"/>
+            <rect x="206" y="328" width="40" height="22" rx="9" fill="#cdd8e8" stroke="#8294ab" stroke-width="2.4" transform="rotate(-26 226 339)"/>
+            <!-- suit detail lines -->
+            <g stroke="#aebbcd" stroke-width="2" fill="none" opacity=".7"><path d="M150 150h60M150 176h60M150 202h60"/></g>
+            <!-- chest control unit + brand lights -->
+            <rect x="150" y="150" width="60" height="40" rx="8" fill="#0c1b2e" stroke="var(--cyan)" stroke-width="1.6"/>
+            <circle cx="162" cy="162" r="3.2" fill="#37e07e"/><circle cx="176" cy="162" r="3.2" fill="#34d0f5"/><circle cx="190" cy="162" r="3.2" fill="#f5c25a"/>
+            <rect x="158" y="174" width="44" height="7" rx="3" fill="#13314e"/>
+            <!-- shoulder accent -->
+            <path d="M126 150c0-18 10-30 28-30" stroke="var(--cyan)" stroke-width="4" fill="none" stroke-linecap="round" opacity=".8"/>
+            <path d="M234 150c0-18-10-30-28-30" stroke="var(--green)" stroke-width="4" fill="none" stroke-linecap="round" opacity=".8"/>
+            <!-- helmet -->
+            <circle cx="180" cy="92" r="62" fill="url(#suit)" stroke="#9fb0c8" stroke-width="2.4"/>
+            <circle cx="180" cy="92" r="47" fill="url(#visorG)"/>
+            <!-- visor: clean Earth-horizon reflection + specular highlight -->
+            <ellipse cx="180" cy="110" rx="32" ry="15" fill="rgba(70,150,230,.4)"/>
+            <ellipse cx="180" cy="116" rx="30" ry="9" fill="rgba(55,200,150,.28)"/>
+            <path d="M150 72a42 42 0 0 1 36-20" stroke="rgba(210,242,255,.55)" stroke-width="5" fill="none" stroke-linecap="round"/>
+            <circle cx="198" cy="80" r="5" fill="rgba(195,240,255,.6)"/>
+            <circle cx="180" cy="92" r="47" fill="none" stroke="rgba(245,194,90,.45)" stroke-width="2.4"/>
+            <circle cx="180" cy="92" r="62" fill="none" stroke="rgba(52,208,245,.5)" stroke-width="1.6"/>
+          </g>
+        </svg>
+      </div>
+    </div>
+  </div>
+  <p class="hero-tag reveal d2"><b>From turbulence to clarity.</b></p>
+  <a class="cta-pill reveal d3" id="enter-hero" href="#" target="_blank" rel="noopener">Enter Workspace
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2.4"><path d="M7 17 17 7M9 7h8v8" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+  <div class="scroll-hint">SCROLL<span style="font-size:16px">↓</span></div>
+</header>
+
+<!-- ===== CHALLENGE ===== -->
+<section id="challenge">
+  <div class="wrap">
+    <div class="section-head reveal"><div class="eyebrow">Chapter 01 · The Challenge</div>
+      <h2>Turbulence corrupts the wavefront <span class="grad-text">faster than you can react.</span></h2>
+      <p class="lead">Atmospheric turbulence distorts an incoming plane wavefront on a millisecond timescale. A Shack-Hartmann sensor samples it as a grid of moving spots — but by the time you measure, reconstruct, and command the mirror, the atmosphere has already changed. That residual is <em>servo-lag error</em>, the dominant limit on sharpness.</p></div>
+    <div class="grid g3">
+      <div class="card reveal d1"><div class="ic"><svg viewBox="0 0 24 24" stroke-width="1.8"><path d="M3 12c4-5 6-5 9 0s5 5 9 0" stroke-linecap="round"/><path d="M3 17c4-5 6-5 9 0s5 5 9 0" stroke-linecap="round" opacity=".5"/></svg></div><h3>Milliseconds matter</h3><p>The coherence time τ₀ is only a few ms. Corrections must outrun it — a hard real-time, computational-efficiency constraint.</p></div>
+      <div class="card reveal d2"><div class="ic"><svg viewBox="0 0 24 24" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18" opacity=".5"/></svg></div><h3>Sub-pixel spots</h3><p>Each lenslet's spot shifts by a fraction of a pixel. Recovery demands precise centroiding and a well-conditioned reconstruction.</p></div>
+      <div class="card reveal d3"><div class="ic"><svg viewBox="0 0 24 24" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18" opacity=".5"/></svg></div><h3>Characterise the sky</h3><p>From the same data, derive the Fried parameter r₀ and coherence time τ₀ — the physical fingerprints of the turbulence overhead.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SOLUTION (with live instrument) ===== -->
+<section id="solution">
+  <div class="wrap">
+    <div class="section-head reveal"><div class="eyebrow">Chapter 02 · Our Solution</div>
+      <h2>Don't just react — <span class="grad-text">predict.</span></h2>
+      <p class="lead">We satisfy the brief with classical zonal + modal reconstruction, then go beyond it: a predictive control layer forecasts each Zernike mode ahead in time, feeding the mirror the wavefront it will face — not the one that already passed. Grounded in real AO research (Gemini ALTAIR linear forecasting), not an ML bolt-on.</p></div>
+    <div class="flow reveal">
+      <div class="step"><div class="n">01</div><h4>Centroid</h4><p>Sub-pixel spot positions from raw SH frames.</p></div><div class="arrow">→</div>
+      <div class="step"><div class="n">02</div><h4>Reconstruct</h4><p>Zonal · Modal · Direct · ML — four methods.</p></div><div class="arrow">→</div>
+      <div class="step"><div class="n">03</div><h4>Characterise</h4><p>Recover r₀ and τ₀ from the wavefront series.</p></div><div class="arrow">→</div>
+      <div class="step" style="border-color:rgba(55,224,126,.4)"><div class="n" style="color:var(--green)">04</div><h4>Predict</h4><p>Forecast modes 1–2 frames ahead (AR).</p></div><div class="arrow">→</div>
+      <div class="step"><div class="n">05</div><h4>Command DM</h4><p>Coupling-aware actuator strokes.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== HOW ===== -->
+<section id="how">
+  <div class="wrap">
+    <div class="section-head reveal"><div class="eyebrow">Chapter 03 · How We Solved It</div>
+      <h2>Calibrate once. Then it's just <span class="grad-text">matrix-vector multiplies.</span></h2>
+      <p class="lead">Every calibration matrix — reconstruction, prediction, DM influence — is built a single time at startup. The per-frame real-time path collapses to a few small matvecs plus a JIT-compiled centroider, so the loop runs far faster than the turbulence evolves.</p></div>
+    <div class="grid g3">
+      <div class="card reveal d1"><div class="ic"><svg viewBox="0 0 24 24" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h10" stroke-linecap="round"/></svg></div><h3>Folded control matrix</h3><p>Reconstruction × actuator projection pre-multiply into one slopes→strokes matrix — "direct gradient control," as SPHERE/Keck run their fast path.</p></div>
+      <div class="card reveal d2"><div class="ic"><svg viewBox="0 0 24 24" stroke-width="1.8"><path d="M13 2 4 14h7l-1 8 9-12h-7z" stroke-linejoin="round"/></svg></div><h3>JIT hot loop</h3><p>The centroider is numba-compiled and parallel over sub-apertures — a 14× speed-up over vectorised NumPy on the only non-trivial per-frame cost.</p></div>
+      <div class="card reveal d3"><div class="ic"><svg viewBox="0 0 24 24" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18" stroke-linecap="round"/></svg></div><h3>Validated at every step</h3><p>Synthetic ground truth at each phase: forward-model exactness, the Noll residual trend, r₀/τ₀ recovery — every claim is a number, not a slogan.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== WHY BETTER ===== -->
+<section id="better">
+  <div class="wrap">
+    <div class="better-top">
+      <div class="section-head reveal" style="margin-bottom:0"><div class="eyebrow">Chapter 04 · Why Ours Is Better</div>
+        <h2>The predictor holds sharpness where the <span class="grad-text">reactive loop collapses.</span></h2>
+        <p class="lead">As loop delay grows, a conventional integrator's correction goes stale and the Strehl ratio falls off a cliff. The predictive layer extrapolates the frozen-flow motion and stays sharp — exactly the regime servo-lag hurts most.</p></div>
+      <div class="viz-side reveal d1"><div class="viz"><canvas id="wf"></canvas><div class="mode" id="vizmode">turbulent</div><div class="tag">live Shack-Hartmann spot field</div></div></div>
+    </div>
+    <div class="grid g2" style="align-items:center">
+      <div class="chartcard reveal"><h3>Strehl ratio vs. loop delay</h3><p class="cap">Higher is sharper · measured on held-out test frames</p>
+        <canvas id="strehl" height="280" aria-label="Strehl vs loop delay"></canvas>
+        <div class="legend"><span><span class="dot" style="background:var(--hot)"></span>Reactive (integrator)</span><span><span class="dot" style="background:var(--good)"></span>Predictive (ours)</span></div></div>
+      <div class="vs reveal d1">
+        <div class="panel naive"><h3><span class="dot" style="background:var(--hot)"></span>Reactive loop</h3><ul>
+          <li><svg viewBox="0 0 24 24" stroke="var(--hot)" stroke-width="2"><path d="M6 6l12 12M18 6 6 18" stroke-linecap="round"/></svg>Applies the already-stale, just-measured wavefront</li>
+          <li><svg viewBox="0 0 24 24" stroke="var(--hot)" stroke-width="2"><path d="M6 6l12 12M18 6 6 18" stroke-linecap="round"/></svg>Strehl crashes to ~0.56 at an 8 ms lag</li></ul></div>
+        <div class="panel ours"><h3><span class="dot" style="background:var(--good)"></span>Predictive loop (ours)</h3><ul>
+          <li><svg viewBox="0 0 24 24" stroke="var(--good)" stroke-width="2"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg>Forecasts each mode ahead — cancels servo-lag</li>
+          <li><svg viewBox="0 0 24 24" stroke="var(--good)" stroke-width="2"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg>Holds Strehl ≈ 0.80 at the same lag · 42–58% less residual</li>
+          <li><svg viewBox="0 0 24 24" stroke="var(--good)" stroke-width="2"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg>Evidence-tested vs. neural &amp; ML — linear wins, honestly reported</li></ul></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== RESULTS ===== -->
+<section id="results">
+  <div class="wrap">
+    <div class="section-head reveal"><div class="eyebrow">Chapter 05 · Tested &amp; Verified</div>
+      <h2>Numbers, not claims.</h2>
+      <p class="lead">Every phase validated against known synthetic ground truth, then stress-tested on real on-sky telemetry. A full automated test suite backs it.</p></div>
+    <div class="stats reveal" style="margin-bottom:24px">
+      <div class="stat"><div class="num"><span data-count="4700">0</span></div><div class="lbl">frames / second</div><div class="sub">224 µs · real-time path</div></div>
+      <div class="stat"><div class="num"><span data-count="85" data-suffix="%">0</span></div><div class="lbl">wavefront error cut</div><div class="sub">2.63 → 0.40 rad RMS</div></div>
+      <div class="stat"><div class="num"><span data-count="58" data-suffix="%">0</span></div><div class="lbl">servo-lag reduced</div><div class="sub">predictive vs reactive</div></div>
+      <div class="stat"><div class="num"><span data-count="56">0</span></div><div class="lbl">tests passing</div><div class="sub">phases 0–10 · 56/56</div></div>
+    </div>
+    <div class="grid g2">
+      <div class="chartcard reveal"><h3>r₀ / τ₀ recovery vs. injected truth</h3><p class="cap">Across four turbulence scenarios — recovered within ~10%</p>
+        <table class="tbl"><thead><tr><th>Scenario</th><th>r₀ err</th><th>τ₀ err</th><th>wind</th></tr></thead><tbody>
+          <tr><td>nominal</td><td class="mono">−9%</td><td class="mono">−8%</td><td><span class="pill win">✓</span></td></tr>
+          <tr><td>strong turbulence</td><td class="mono">−9%</td><td class="mono">−8%</td><td><span class="pill win">✓</span></td></tr>
+          <tr><td>fast wind</td><td class="mono">+14%</td><td class="mono">+16%</td><td><span class="pill mid">~</span></td></tr>
+          <tr><td>weak turbulence</td><td class="mono">−3%</td><td class="mono">+9%</td><td><span class="pill win">✓</span></td></tr></tbody></table></div>
+      <div class="chartcard reveal d1"><h3>Four reconstruction methods, compared</h3><p class="cap">Held-out frames · RMS wavefront error &amp; inference time</p>
+        <table class="tbl"><thead><tr><th>Method</th><th>RMS err</th><th>infer</th><th></th></tr></thead><tbody>
+          <tr><td>Zonal (Fried)</td><td class="mono">7.0%</td><td class="mono">62.7 µs</td><td><span class="pill win">best</span></td></tr>
+          <tr><td>Modal (Zernike)</td><td class="mono">12.2%</td><td class="mono">20.8 µs</td><td><span class="pill win">fast</span></td></tr>
+          <tr><td>ML (ridge)</td><td class="mono">12.4%</td><td class="mono">22.2 µs</td><td><span class="pill mid">ties</span></td></tr>
+          <tr><td>Direct gradient</td><td class="mono">—</td><td class="mono">1 matvec</td><td><span class="pill win">RT</span></td></tr></tbody></table></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== REAL DATA ===== -->
+<section id="realdata">
+  <div class="wrap">
+    <div class="section-head reveal"><div class="eyebrow">Chapter 06 · Real-World Stress Test</div>
+      <h2>Run unchanged on <span class="grad-text">on-sky VLT telemetry.</span></h2>
+      <p class="lead">Built and validated on synthetic data, the pipeline then ran on real Shack-Hartmann telemetry from ESO's NAOMI system at the VLT — a different telescope and instrument — with <strong style="color:var(--text)">no algorithm changes</strong>, only a thin data adapter. The stress test surfaced real-detector refinements synthetic data alone never could.</p></div>
+    <div class="grid g4">
+      <div class="card reveal d1"><h3 style="font-size:16px">VLT AT3 · NAOMI</h3><p>3,095 raw 64×64 frames, 30k slope records — frame-aligned by timestamp.</p></div>
+      <div class="card reveal d2"><h3 style="font-size:16px">Centroids track RTC</h3><p>Our slopes match the instrument's own real-time computer (tip/tilt ≈ 0.86).</p></div>
+      <div class="card reveal d3"><h3 style="font-size:16px">Plausible physics</h3><p>r₀ checked against reported 0.53″ seeing; τ₀/wind consistent with the ASM profile.</p></div>
+      <div class="card reveal d4"><h3 style="font-size:16px">Graceful, documented</h3><p>Real-detector effects (dark, bad pixels, readout bias) found and handled — rigor as evidence.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer id="footer">
+  <div class="wrap">
+    <img class="flogo logo-img reveal" src="assets/images/logo.png" alt="Meinewelt-Strehl" />
+    <div class="eyebrow reveal" style="justify-content:center">Climax · Ready when you are</div>
+    <h2 class="reveal d1">Step into the live workspace.</h2>
+    <p class="lead reveal d2" style="margin:0 auto">Replay the correction with and without prediction, sweep the turbulence, and watch r₀, τ₀ and Strehl update live.</p>
+    <div class="cta-row reveal d3"><a class="btn btn-primary" id="enter-foot" href="#" target="_blank" rel="noopener" style="font-size:17px;padding:16px 32px">Enter Workspace <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></a></div>
+    <div class="foot-meta">MEINEWELT-STREHL · FROM TURBULENCE TO CLARITY<br>PREDICTIVE ADAPTIVE-OPTICS WAVEFRONT RECONSTRUCTION · ISRO BAH 2026 · PS9 · PRL<br><span id="ws-url" style="color:var(--muted)"></span></div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+  var reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;var $=function(s){return document.querySelector(s)};var body=document.body;
+  var host=(location.hostname&&location.hostname!=="")?location.hostname:"localhost";var WS="http://"+host+":8501";
+  ["enter-nav","enter-hero","enter-foot","enter-sheet"].forEach(function(id){var e=document.getElementById(id);if(e)e.href=WS;});
+  var u=$("#ws-url");if(u)u.textContent="workspace → "+WS;
+
+  var intro=$("#intro"),vid=$("#introvid"),bar=$("#introbar");
+  function endIntro(){if(intro.classList.contains("hide"))return;intro.classList.add("hide");body.classList.remove("locked");
+    try{vid.pause();}catch(e){}try{sessionStorage.setItem("introSeen","1");}catch(e){}setTimeout(function(){intro.style.display="none";startReveals();},900);}
+  if(sessionStorage.getItem("introSeen")==="1"){intro.classList.add("hide");intro.style.display="none";body.classList.remove("locked");}
+  else{var p=vid.play();if(p&&p.catch)p.catch(function(){});vid.addEventListener("timeupdate",function(){if(vid.duration)bar.style.width=(vid.currentTime/vid.duration*100)+"%";});vid.addEventListener("ended",endIntro);}
+  $("#skip").addEventListener("click",endIntro);
+  $("#sound").addEventListener("click",function(){vid.muted=!vid.muted;$("#mutex").style.display=vid.muted?"":"none";if(!vid.muted){var pp=vid.play();if(pp&&pp.catch)pp.catch(function(){});}});
+
+  var nav=$("#nav"),prog=$("#progress");
+  function onScroll(){var y=scrollY,h=document.documentElement.scrollHeight-innerHeight;nav.classList.toggle("scrolled",y>20);prog.style.width=(h>0?(y/h*100):0)+"%";}
+  addEventListener("scroll",onScroll,{passive:true});onScroll();
+
+  var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target);}});},{threshold:.14});
+  function startReveals(){document.querySelectorAll(".reveal").forEach(function(el){io.observe(el);});}
+  if(sessionStorage.getItem("introSeen")==="1")startReveals();
+
+  function countUp(el){var t=parseFloat(el.dataset.count),suf=el.dataset.suffix||"",d=1500,s=null;if(reduce){el.textContent=t+suf;return;}
+    function tk(ts){if(!s)s=ts;var p=Math.min((ts-s)/d,1),e=1-Math.pow(1-p,3);el.textContent=Math.round(t*e)+suf;if(p<1)requestAnimationFrame(tk);}requestAnimationFrame(tk);}
+  var cio=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){countUp(e.target);cio.unobserve(e.target);}});},{threshold:.6});
+  document.querySelectorAll("[data-count]").forEach(function(el){cio.observe(el);});
+
+  var links=document.querySelectorAll("#navlinks a"),pill=$("#pill"),wrapN=$("#navlinks");
+  function movePill(el){if(!el){pill.style.opacity=0;return;}var pr=wrapN.getBoundingClientRect(),r=el.getBoundingClientRect();pill.style.width=r.width+"px";pill.style.transform="translateX("+(r.left-pr.left-5)+"px)";pill.style.opacity=1;}
+  var activeLink=null;links.forEach(function(a){a.addEventListener("mouseenter",function(){movePill(a);});a.addEventListener("mouseleave",function(){movePill(activeLink);});});
+  var spy=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){var id=e.target.id;links.forEach(function(a){a.classList.toggle("active",a.dataset.sec===id);if(a.dataset.sec===id)activeLink=a;});if(activeLink)movePill(activeLink);}});},{rootMargin:"-45% 0px -50% 0px"});
+  ["challenge","solution","results","realdata"].forEach(function(id){var s=document.getElementById(id);if(s)spy.observe(s);});
+  addEventListener("resize",function(){movePill(activeLink);});
+
+  var sheet=$("#sheet");function closeSheet(){sheet.classList.remove("open");body.classList.remove("locked");}
+  $("#burger").addEventListener("click",function(){sheet.classList.add("open");});$("#sheetclose").addEventListener("click",closeSheet);
+  sheet.querySelectorAll("a").forEach(function(a){a.addEventListener("click",closeSheet);});
+  addEventListener("keydown",function(e){if(e.key==="Escape"){closeSheet();if(intro&&!intro.classList.contains("hide"))endIntro();}});
+
+  /* astronaut travels to empty spaces as you scroll (scroll-driven for reliability) */
+  (function(){
+    var astro=document.getElementById("astroFix");if(!astro)return;
+    // [centerX vw, centerY vh, scale] per section — astronaut sits BEHIND content, peeking through empty areas
+    var T={top:[50,44,1.05],challenge:[80,33,.74],solution:[80,35,.74],how:[80,37,.72],better:[13,46,.6],results:[81,32,.72],realdata:[80,34,.74],footer:[72,42,.56]};
+    var ids=["top","challenge","solution","how","better","results","realdata","footer"];
+    var cur=null;
+    function go(id){if(id===cur||!T[id])return;cur=id;var t=T[id];astro.style.transform="translate(calc("+t[0]+"vw - 50%),calc("+t[1]+"vh - 50%)) scale("+t[2]+")";}
+    function pick(){var mid=innerHeight*0.5,active="top";
+      ids.forEach(function(id){var s=document.getElementById(id);if(!s)return;var r=s.getBoundingClientRect();if(r.top<=mid&&r.bottom>=mid)active=id;});
+      go(active);}
+    go("top");pick();
+    addEventListener("scroll",pick,{passive:true});addEventListener("resize",pick);
+  })();
+
+  /* starfield + shooting stars */
+  (function(){var c=$("#stars"),x=c.getContext("2d"),st=[],sh=[],W,H,dpr,frame=0;
+    function size(){dpr=Math.min(devicePixelRatio||1,2);W=c.width=innerWidth*dpr;H=c.height=innerHeight*dpr;c.style.width=innerWidth+"px";c.style.height=innerHeight+"px";
+      st=[];var n=Math.min(230,Math.floor(innerWidth*innerHeight/7000));
+      for(var i=0;i<n;i++)st.push({x:Math.random()*W,y:Math.random()*H,r:(Math.random()*1.5+.3)*dpr,a:Math.random(),s:Math.random()*.02+.004,p:Math.random()*6.28,d:Math.random()});}
+    size();addEventListener("resize",size);
+    (function loop(t){x.clearRect(0,0,W,H);
+      for(var i=0;i<st.length;i++){var s=st[i],tw=reduce?.7:(Math.sin(t*s.s+s.p)*.4+.6);x.globalAlpha=s.a*tw*.92;x.fillStyle=s.d>.92?"#37e07e":(s.d>.8?"#34d0f5":"#dceaff");x.beginPath();x.arc(s.x,s.y,s.r,0,6.283);x.fill();}
+      if(!reduce){frame++;if(frame%160===0&&sh.length<2)sh.push({x:Math.random()*W*.7,y:Math.random()*H*.4,v:(6+Math.random()*5)*dpr,a:1,ang:.5+Math.random()*.3});
+        for(var j=sh.length-1;j>=0;j--){var m=sh[j];m.x+=m.v*Math.cos(m.ang);m.y+=m.v*Math.sin(m.ang);m.a-=.012;x.globalAlpha=Math.max(0,m.a);x.strokeStyle="rgba(180,230,255,.9)";x.lineWidth=2*dpr;x.lineCap="round";x.beginPath();x.moveTo(m.x,m.y);x.lineTo(m.x-m.v*7*Math.cos(m.ang),m.y-m.v*7*Math.sin(m.ang));x.stroke();if(m.a<=0)sh.splice(j,1);}}
+      x.globalAlpha=1;requestAnimationFrame(loop);})(0);})();
+
+  /* SH viz */
+  (function(){var c=$("#wf");if(!c)return;var x=c.getContext("2d"),W,H,dpr,N=11,t=0,modeEl=$("#vizmode");
+    function size(){dpr=Math.min(devicePixelRatio||1,2);var r=c.getBoundingClientRect();W=c.width=r.width*dpr;H=c.height=r.height*dpr;}size();addEventListener("resize",size);
+    function ph(px,py,tt){return Math.sin(px*2.1+tt*.9)*.6+Math.cos(py*1.7-tt*.7)*.5+Math.sin((px+py)*1.3+tt*.5)*.4+Math.cos((px-py)*2.4-tt*.3)*.3;}
+    var corrected=false,cyc=0;
+    (function draw(){t+=reduce?0:.016;cyc+=reduce?0:.004;if(cyc>1){cyc=0;corrected=!corrected;modeEl.textContent=corrected?"predictive · corrected":"turbulent";modeEl.style.color=corrected?"var(--green)":"var(--muted)";modeEl.style.borderColor=corrected?"rgba(55,224,126,.45)":"var(--border2)";}
+      x.clearRect(0,0,W,H);var cx=W/2,cy=H/2,R=Math.min(W,H)*.46,cell=R*2/N,amp=corrected?.16:1,g=18;
+      for(var i=0;i<g;i++)for(var j=0;j<g;j++){var ux=(i/(g-1)-.5)*2,uy=(j/(g-1)-.5)*2;if(ux*ux+uy*uy>1.02)continue;var v=ph(ux*1.6,uy*1.6,t)*amp,nv=Math.max(-1,Math.min(1,v/1.6));var rr=nv>0?Math.round(70+nv*60):40,gg=nv<0?Math.round(120-nv*120):150,bb=nv>0?Math.round(150+nv*90):120;x.fillStyle="rgba("+rr+","+gg+","+bb+","+(0.15*Math.abs(nv)+0.03)+")";var sx=cx+ux*R,sy=cy+uy*R,ps=cell*1.15;x.fillRect(sx-ps/2,sy-ps/2,ps,ps);}
+      for(var a=0;a<N;a++)for(var b=0;b<N;b++){var gx=a-(N-1)/2,gy=b-(N-1)/2;if(Math.hypot(gx,gy)>N/2)continue;var ux2=gx/(N/2),uy2=gy/(N/2);var dx=(ph(ux2*1.6+.3,uy2*1.6,t)-ph(ux2*1.6-.3,uy2*1.6,t))*amp;var dy=(ph(ux2*1.6,uy2*1.6+.3,t)-ph(ux2*1.6,uy2*1.6-.3,t))*amp;var bx=cx+gx*cell,by=cy+gy*cell,sx=bx+dx*cell*.5,sy=by+dy*cell*.5;x.strokeStyle="rgba(150,220,255,.05)";x.lineWidth=1;x.strokeRect(bx-cell/2,by-cell/2,cell,cell);var disp=Math.hypot(dx,dy),col=corrected?"55,224,126":(disp>.7?"255,106,82":"52,208,245"),rad=cell*.16;var grd=x.createRadialGradient(sx,sy,0,sx,sy,rad*2.6);grd.addColorStop(0,"rgba("+col+",.95)");grd.addColorStop(1,"rgba("+col+",0)");x.fillStyle=grd;x.beginPath();x.arc(sx,sy,rad*2.6,0,6.283);x.fill();}
+      x.strokeStyle="rgba(55,224,126,.22)";x.lineWidth=1.5*dpr;x.beginPath();x.arc(cx,cy,R+cell*.2,0,6.283);x.stroke();requestAnimationFrame(draw);})();})();
+
+  /* Strehl chart */
+  (function(){var c=$("#strehl");if(!c)return;var x=c.getContext("2d"),W,H,dpr,started=false,prog2=0;
+    var delays=[1,2,3,4],reactive=[.94,.83,.70,.56],predictive=[.97,.91,.86,.80];
+    function size(){dpr=Math.min(devicePixelRatio||1,2);var r=c.getBoundingClientRect();W=c.width=r.width*dpr;H=c.height=280*dpr;c.style.height="280px";}
+    function P(i,arr,pl,pr,pt,pb){var n=arr.length;return [pl+(W-pl-pr)*(i/(n-1)),pt+(H-pt-pb)*(1-(arr[i]-.4)/.6)];}
+    function draw(){var pl=46*dpr,pr=20*dpr,pt=18*dpr,pb=34*dpr;x.clearRect(0,0,W,H);x.font=(11*dpr)+"px 'Roboto Mono',monospace";x.textAlign="right";x.textBaseline="middle";
+      for(var v=.4;v<=1.001;v+=.2){var py=pt+(H-pt-pb)*(1-(v-.4)/.6);x.strokeStyle="rgba(150,220,255,.06)";x.lineWidth=1;x.beginPath();x.moveTo(pl,py);x.lineTo(W-pr,py);x.stroke();x.fillStyle="#62788c";x.fillText(v.toFixed(1),pl-8*dpr,py);}
+      x.textAlign="center";x.textBaseline="top";for(var i=0;i<delays.length;i++){var px=pl+(W-pl-pr)*(i/(delays.length-1));x.fillStyle="#62788c";x.fillText((delays[i]*2)+"ms",px,H-pb+8*dpr);}
+      function line(arr,color){x.beginPath();for(var i=0;i<arr.length;i++){var p=P(i,arr,pl,pr,pt,pb),pr2=Math.max(0,Math.min(1,prog2*(arr.length-1)-i+1));if(i===0)x.moveTo(p[0],p[1]);else if(pr2>0){var pa=P(i-1,arr,pl,pr,pt,pb);x.lineTo(pa[0]+(p[0]-pa[0])*pr2,pa[1]+(p[1]-pa[1])*pr2);}}x.strokeStyle=color;x.lineWidth=3*dpr;x.lineJoin="round";x.shadowColor=color;x.shadowBlur=14*dpr;x.stroke();x.shadowBlur=0;for(var k=0;k<arr.length;k++){if(prog2*(arr.length-1)>=k-.01){var pp=P(k,arr,pl,pr,pt,pb);x.fillStyle="#050e1a";x.beginPath();x.arc(pp[0],pp[1],4.5*dpr,0,6.283);x.fill();x.fillStyle=color;x.beginPath();x.arc(pp[0],pp[1],3*dpr,0,6.283);x.fill();}}}
+      line(reactive,"#ff6a52");line(predictive,"#37e07e");if(prog2<1){prog2+=reduce?1:.02;requestAnimationFrame(draw);}}
+    var io2=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting&&!started){started=true;size();prog2=reduce?1:0;draw();}});},{threshold:.4});
+    io2.observe(c);addEventListener("resize",function(){if(started){size();draw();}});})();
+})();
+</script>
+</body>
+</html>

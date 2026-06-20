@@ -1,0 +1,33 @@
+# ---- Large real datasets (1.2 GB — exceeds GitHub limits, not needed to deploy) ----
+data/
+
+# ---- Duplicate source uploads at repo root (working copies live in landing/assets/) ----
+/assets/
+
+# ---- Heavy background videos (>50 MB — not needed for the Streamlit dashboard) ----
+landing/assets/videos/background.mp4
+landing/assets/videos/background-2.mp4
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+.venv/
+venv/
+env/
+
+# ---- OS / editor ----
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+
+# ---- Local Claude tooling (third-party skill copies, machine-specific) ----
+.claude/skills/
+.claude/launch.json

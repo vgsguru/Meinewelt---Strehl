@@ -1,0 +1,27 @@
+# Core numerics
+numpy>=1.26
+scipy>=1.11
+
+# Adaptive-optics domain library (phase screens, Zernike basis, turbulence stats)
+aotools>=1.0.7
+
+# JIT acceleration for the per-frame hot path (Phase 6)
+numba>=0.59
+
+# Image I/O for .bmp SH-WFS frames
+Pillow>=10.0
+
+# Visualization / dashboard
+matplotlib>=3.8
+streamlit>=1.30
+
+# Config
+PyYAML>=6.0
+
+# Testing
+pytest>=8.0
+
+# NOTE: AR / Kalman predictors (Phase 4) are implemented in-house in
+# aowfs/predict/ rather than depending on filterpy/statsmodels. This keeps the
+# real-time control path free of heavyweight, loosely-maintained dependencies
+# and lets us pin numerical behaviour for reproducibility.
