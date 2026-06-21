@@ -29,7 +29,9 @@ _REF_NM = _CFG.turbulence.r0_ref_wavelength_m * 1e9
 _R0_FACTOR = (_CFG.pupil.wavelength_m / _CFG.turbulence.r0_ref_wavelength_m) ** (6.0 / 5.0)
 
 
-@st.cache_data(show_spinner=True)
+# max_entries caps how many cached runs are held resident — keeps the free-tier
+# (~1 GB) memory bounded as the user sweeps the sliders.
+@st.cache_data(show_spinner=True, max_entries=3)
 def _replay(r0_ref_mm: float, wind: float, delay: int, n_frames: int, n_modes: int):
     base = SimConfig()
     cfg = replace(
@@ -64,7 +66,7 @@ with st.sidebar:
     )
     wind = st.slider("wind speed [m/s]", 0.5, 6.0, 2.0, 0.5)
     delay = st.slider("loop delay [frames]", 1, 4, 2, 1)
-    n_frames = st.select_slider("frames", options=[150, 250, 400], value=250)
+    n_frames = st.select_slider("frames", options=[150, 250, 400], value=150)
     n_modes = st.select_slider("Zernike modes", options=[20, 45, 66], value=45)
 
 data = _replay(r0_ref_mm, wind, delay, n_frames, n_modes)
