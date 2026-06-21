@@ -66,7 +66,7 @@ with st.sidebar:
     )
     wind = st.slider("wind speed [m/s]", 0.5, 6.0, 2.0, 0.5)
     delay = st.slider("loop delay [frames]", 1, 4, 2, 1)
-    n_frames = st.select_slider("frames", options=[150, 250, 400], value=150)
+    n_frames = st.select_slider("frames", options=[150, 250, 400], value=250)
     n_modes = st.select_slider("Zernike modes", options=[20, 45, 66], value=45)
 
 data = _replay(r0_ref_mm, wind, delay, n_frames, n_modes)
